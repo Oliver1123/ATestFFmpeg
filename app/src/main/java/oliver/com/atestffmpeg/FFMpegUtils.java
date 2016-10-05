@@ -273,7 +273,7 @@ public class FFMpegUtils {
 
     public static String[] generateAddAudioToVideoCommand(String inputVideo, String inputAudio, String outputFile) {
         return new String[]{"-y", "-i", inputVideo, "-i", inputAudio,
-                "-c:v", "copy", "-c:a", "copy",
+                "-c:v", "copy", "-c:a", "aac",
                 "-shortest",
                 "-strict", "experimental",
                 outputFile};
