@@ -122,6 +122,30 @@ public class FFMpegUtils {
         ffmpegSimpleCommand(context, "AddAudioToVideo", cmd, listener);
     }
 
+    public static void encodeAudioAAC(Context context, String inputAudio, String outputFile, final FFMpegSimpleListener listener) {
+        String[] cmd = generateEncodeAudioAACCommand(inputAudio, outputFile);
+        ffmpegSimpleCommand(context, "encodeAudioAAC", cmd, listener);
+    }
+
+
+    public static void trimAudioAndEncodeAAC(final Context context, String inputFile, String startTime, String durationTime, final String outputFile, final FFMpegSimpleListener listener) {
+        String fileName = outputFile.substring(outputFile.lastIndexOf("/") + 1);
+        final String tmpFile = outputFile.replace(fileName, "tmp." + Utils.getFileExtension(inputFile));
+
+        trimAudio(context, inputFile, startTime, durationTime, tmpFile, new FFMpegSimpleListener() {
+
+            @Override
+            public void onSuccess(String message) {
+                encodeAudioAAC(context, tmpFile, outputFile, listener);
+            }
+
+            @Override
+            public void onFail(String message) {
+                listener.onFail(message);
+            }
+        });
+    }
+
     public static void extractAudio(Context context, String inputVideo, String outputAudio, final FFMpegSimpleListener listener) {
         String[] cmd = generateExtractSoundCommand(inputVideo, outputAudio);
         ffmpegSimpleCommand(context, "ExtractAudio", cmd, listener);
@@ -245,6 +269,7 @@ public class FFMpegUtils {
                 "-ss", startTime,
                 "-t", durationTime,
                 "-i", inputFile,
+                "-vn",
                 "-acodec", "copy",
                 outputFile};
     }
@@ -273,9 +298,23 @@ public class FFMpegUtils {
 
     public static String[] generateAddAudioToVideoCommand(String inputVideo, String inputAudio, String outputFile) {
         return new String[]{"-y", "-i", inputVideo, "-i", inputAudio,
-                "-c:v", "copy", "-c:a", "aac",
+                "-c:v", "copy", "-c:a", "copy",
                 "-shortest",
                 "-strict", "experimental",
+                "-preset", "ultrafast",
+                outputFile};
+    }
+
+
+    public static String[] generateEncodeAudioAACCommand(String inputAudio, String outputFile) {
+        return new String[]{"-y", "-i", inputAudio,
+                "-c:a", "aac",
+                "-b:a", "64k",
+//                "-q:a", "0.5",
+                "-vn",
+                "-ac", "1",
+                "-strict", "experimental",
+                "-preset", "ultrafast",
                 outputFile};
     }
 

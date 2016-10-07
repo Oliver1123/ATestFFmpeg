@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = MainActivity.class.getSimpleName();
     private VideoView mVideoView;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,40 +34,83 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         configureFFMpeg();
     }
 
+    String inputVideo = "/storage/emulated/0/Movies/SOLO/test/solo_in_000.mp4";
+    String inputAudio = "/storage/emulated/0/Movies/SOLO/test/trimmedAudio.mp3";
+
+    String inputVideo1 = "/storage/emulated/0/Movies/SOLO/test/solo_filtered_video.mp4";
+    String inputAudio1 = "/storage/emulated/0/Movies/SOLO/test/audio_from_video.aac";
+    String audioStartTime = "00:00:00.000";
+    String audioDuration = "00:00:09.925";
+    String originalAudio = "/storage/emulated/0/Files/music/PaRaMoRe/Albums/2013 - Paramore (Deluxe Edition)/14. (One Of Those) Crazy Girls.mp3";
+    String audioOut = "/storage/emulated/0/Movies/SOLO/test/audioOut.mp3";
+
+    String encodedAudio = "/storage/emulated/0/Movies/SOLO/test/encodedAudio.aac";
+
+    String outVideo = "/storage/emulated/0/Movies/SOLO/test/video_with_audio.mp4";
+
     @Override
     public void onClick(View view) {
-        String inputVideo = "/storage/emulated/0/Movies/SOLO/test/solo_in_000.mp4";
-        String inputAudio = "/storage/emulated/0/Movies/SOLO/test/trimmedAudio.mp3";
 
-        String inputVideo1 = "/storage/emulated/0/Movies/SOLO/test/solo_filtered_video.mp4";
-        String inputAudio1 = "/storage/emulated/0/Movies/SOLO/test/audio_from_video.aac";
-        String audioStartTime = "00:00:00.000";
-        String audioDuration = "00:00:09.925";
-        String originalAudio = "/storage/emulated/0/Files/music/PaRaMoRe/Albums/2013 - Paramore (Deluxe Edition)/14. (One Of Those) Crazy Girls.mp3";
-        String audioOut = "/storage/emulated/0/Movies/SOLO/test/audioOut.mp3";
 
 
         Log.d(TAG, "onClick: " + originalAudio + " exist: " + new File(originalAudio).exists());
-//        trimAudio(startTime, duration, originalAudio, audioOut);
-        String outVideo = "/storage/emulated/0/Movies/SOLO/test/video_with_audio.mp4";
-        addAudioToVideo(inputVideo, inputAudio, outVideo);
-//        testVideo(inputVideo);
+
+//        FFMpegUtils.getFileInfo(this, inputVideo, null);
+//        FFMpegUtils.getFileInfo(this, inputAudio, null);
+//        trimAudio(originalAudio, audioStartTime, audioDuration, audioOut);
+
+//        FFMpegUtils.getFileInfo(this, encodedAudio, null);
+//        encodeAudioAAc(audioOut, encodedAudio);
+        trimAndEncode();
+    }
+
+    private void trimAndEncode() {
+        Log.d(TAG, "trimAudioAndEncodeAAC: start");
+        final long startTime = System.currentTimeMillis();
+        FFMpegUtils.trimAudioAndEncodeAAC(this, originalAudio, audioStartTime, audioDuration, encodedAudio, new FFMpegSimpleListener() {
+            @Override
+            public void onSuccess(String message) {
+                long endTime = System.currentTimeMillis();
+                Log.d(TAG, "trimAudioAndEncodeAAC onSuccess: take: " + (endTime - startTime));
+            }
+
+            @Override
+            public void onFail(String message) {
+                Log.d(TAG, "trimAudioAndEncodeAAC onFail: ");
+            }
+        });
+    }
+
+    private void encodeAudioAAc(String audioOut, final String encodedAudio) {
+        final long encodeAudioAAcStartTime = System.currentTimeMillis();
+        FFMpegUtils.encodeAudioAAC(this, audioOut, encodedAudio, new FFMpegSimpleListener() {
+            @Override
+            public void onSuccess(String message) {
+                long endTime = System.currentTimeMillis();
+                Log.d(TAG, "encodeAudioAAC onSuccess: take: " + (endTime - encodeAudioAAcStartTime));
+                addAudioToVideo(inputVideo, encodedAudio, outVideo);
+            }
+
+            @Override
+            public void onFail(String message) {
+                Log.d(TAG, "encodeAudioAAC onFail: ");
+            }
+        });
     }
 
     private void addAudioToVideo(String inputVideo, String inputAudio, final String outVideo) {
-        final long startTime = System.currentTimeMillis();
+        final long addAudioToVideoStartTime = System.currentTimeMillis();
         FFMpegUtils.addAudioToVideo(this, inputVideo, inputAudio, outVideo, new FFMpegSimpleListener() {
             @Override
             public void onSuccess(String message) {
                 long endTime = System.currentTimeMillis();
-                Log.d(TAG, "addAudioToVideo onSuccess: take: " + (endTime - startTime));
+                Log.d(TAG, "addAudioToVideo onSuccess: take: " + (endTime - addAudioToVideoStartTime));
                 testVideo(outVideo);
             }
 
             @Override
             public void onFail(String message) {
-                long endTime = System.currentTimeMillis();
-                Log.d(TAG, "addAudioToVideo onFail: take: " + (endTime - startTime));
+                Log.d(TAG, "addAudioToVideo onFail:");
             }
         });
     }
@@ -80,19 +124,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private void trimAudio(String startTime, String duration, String originalAudio, String audioOut) {
+    private void trimAudio(String originalAudio, String startTime, String duration, String audioOut) {
         FFMpegUtils.trimAudio(this,
                 originalAudio,
                 startTime, duration, audioOut,
                 new FFMpegSimpleListener() {
             @Override
             public void onSuccess(String message) {
-                Log.d(TAG, "onSuccess: ");
+                Log.d(TAG, "trimAudio onSuccess: ");
             }
 
             @Override
             public void onFail(String message) {
-                Log.d(TAG, "onFail: ");
+                Log.d(TAG, "trimAudio onFail: ");
             }
         });
     }
